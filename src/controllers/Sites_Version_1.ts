@@ -15,8 +15,8 @@ class SitesVersion1 {
       res.status(200).json({ success: true });
     });
     this.router.get('/get_sites/:email/:password', (req: any, res: Response, next: NextFunction) => this.getSites(req, res, next));
-    this.router.get('/get_sites_just_name_id/:email/:password', (req: any, res: Response, next: NextFunction) => this.getSitesByName(req, res, next));
-    this.router.get('/get_sites_by_name/:email/:password/:name', (req: any, res: Response, next: NextFunction) => this.getSitesById(req, res, next));
+    this.router.get('/get_sites_just_name_id/:email/:password', (req: any, res: Response, next: NextFunction) => this.getSitesJustNameAndId(req, res, next));
+    this.router.get('/get_sites_by_name/:email/:password/:name', (req: any, res: Response, next: NextFunction) => this.getSitesByName(req, res, next));
     this.router.get('/get_sites_by_id/:email/:password/:id', (req: any, res: Response, next: NextFunction) => this.getSitesById(req, res, next));
     this.router.get('/update_sites_id/:email/:password/:description/:id/:name/:lat/:long/:image', (req: any, res: Response, next: NextFunction) => this.updateSites(req, res, next));
     this.router.get('/delete_sites_by_id/:email/:password/:id', (req: any, res: Response, next: NextFunction) => this.deleteSitesById(req, res, next));
@@ -29,7 +29,7 @@ class SitesVersion1 {
       const { params: { email, password } } = req;
       const auth = await firebase.auth().signInWithEmailAndPassword(email, password);
       const ref = firebase.firestore()
-      const documents = await (await ref.collection('SitiosInteres').get()).docs 
+      const documents = await (await ref.collection('SitiosInteres').orderBy("id").limit(25).get()).docs 
       var sitios = []
       for(var i = 0; i< documents.length; i++){
         sitios.push(documents[i].data())
@@ -37,7 +37,7 @@ class SitesVersion1 {
       console.log(sitios) 
       return res.status(200).json(sitios)
     } catch (error) {
-      if(error === 'unaturozide'){
+      if(error === 'unathorized'){
         return res.status(400).json({ error });
       }
       return res.status(500).json({ error });
@@ -61,7 +61,7 @@ class SitesVersion1 {
       console.log(sitiosFiltrados) 
       return res.status(200).json(sitiosFiltrados)
     } catch (error) {
-      if(error === 'unaturozide'){
+      if(error === 'unathorized'){
         return res.status(400).json({ error });
       }
       return res.status(500).json({ error });
@@ -74,14 +74,15 @@ class SitesVersion1 {
       const { params: { email, password, name } } = req;
       const auth = await firebase.auth().signInWithEmailAndPassword(email, password);
       const ref = firebase.firestore()
-      const documents = await (await ref.collection('SitiosInteres').get()).docs 
-      var sitiosFiltrados = documents.filter(function(document){
-        return document.data().nombre.indexOf(name);
-      })
-      console.log(sitiosFiltrados) 
-      return res.status(200).json(sitiosFiltrados)
+      var sitiosFiltrados = await (await ref.collection('SitiosInteres').where('nombre', "==", name).get()).docs; 
+      var sitios = []
+      for(var i = 0; i< sitiosFiltrados.length; i++){
+        sitios.push(sitiosFiltrados[i].data())
+      }
+      console.log(sitios)  
+      return res.status(200).json(sitios)
     } catch (error) {
-      if(error === 'unaturozide'){
+      if(error === 'unathorized'){
         return res.status(400).json({ error });
       }
       return res.status(500).json({ error });
@@ -98,7 +99,7 @@ class SitesVersion1 {
       console.log(documents[id].data()) 
       return res.status(200).json(documents[id].data())
     } catch (error) {
-      if(error === 'unaturozide'){
+      if(error === 'unathorized'){
         return res.status(400).json({ error });
       }
       return res.status(500).json({ error });
@@ -126,7 +127,7 @@ class SitesVersion1 {
       console.log(sitio) 
       return res.status(200).json(sitio)
     } catch (error) {
-      if(error === 'unaturozide'){
+      if(error === 'unathorized'){
         return res.status(400).json({ error });
       }
       return res.status(500).json({ error });
@@ -135,25 +136,14 @@ class SitesVersion1 {
 
   async deleteSitesById(req: any, res: Response, next: NextFunction) {
     try {
-      const { params: { email, password, description, id, name, lat, long, image } } = req;
+      const { params: { email, password, id} } = req;
       const auth = await firebase.auth().signInWithEmailAndPassword(email, password);
       const ref = firebase.firestore();
-      var sitio = {
-        descripcion : description, 
-        id : parseInt(id),
-        nombre : name,
-        ubicacion : {
-          _lat : parseFloat(lat),
-          _long : parseFloat(long),
-        },
-        url_imagen : image
-      }
-      var sitioUpdated = await ref.collection('SitiosInteres').doc(id).set(sitio);
-
-      console.log(sitio) 
-      return res.status(200).json(sitio)
+      var sitioUpdated = await ref.collection('SitiosInteres').doc(id).delete();
+      console.log("Sitio con id " + id + " eliminado") 
+      return res.status(200).json("Sitio de id" + id + "eliminado")
     } catch (error) {
-      if(error === 'unaturozide'){
+      if(error === 'unathorized'){
         return res.status(400).json({ error });
       }
       return res.status(500).json({ error });
