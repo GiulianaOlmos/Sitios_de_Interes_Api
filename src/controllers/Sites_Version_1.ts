@@ -95,9 +95,13 @@ class SitesVersion1 {
       const { params: { email, password, id } } = req;
       const auth = await firebase.auth().signInWithEmailAndPassword(email, password);
       const ref = firebase.firestore()
-      const documents = await (await ref.collection('SitiosInteres').get()).docs 
-      console.log(documents[id].data()) 
-      return res.status(200).json(documents[id].data())
+      var sitiosFiltrados = await (await ref.collection('SitiosInteres').where('id', "==", parseInt(id)).get()).docs; 
+      var sitios = []
+      for(var i = 0; i< sitiosFiltrados.length; i++){
+        sitios.push(sitiosFiltrados[i].data())
+      }
+      console.log(sitios)  
+      return res.status(200).json(sitios)
     } catch (error) {
       if(error === 'unathorized'){
         return res.status(400).json({ error });
@@ -141,7 +145,7 @@ class SitesVersion1 {
       const ref = firebase.firestore();
       var sitioUpdated = await ref.collection('SitiosInteres').doc(id).delete();
       console.log("Sitio con id " + id + " eliminado") 
-      return res.status(200).json("Sitio de id" + id + "eliminado")
+      return res.status(200).json("Sitio de id " + id + " eliminado")
     } catch (error) {
       if(error === 'unathorized'){
         return res.status(400).json({ error });
