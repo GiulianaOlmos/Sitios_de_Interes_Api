@@ -1,5 +1,5 @@
 import { Router, Response, NextFunction } from 'express';
-import firebase from '../service/firebase.service';
+import {firebase} from '../service/firebase.service';
 
 class AuthVersion1 {
 
